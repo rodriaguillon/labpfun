@@ -101,7 +101,12 @@ lintRedIfCond = Linting $ \expr -> case expr of
 -- Sustitución de if por conjunción entre la condición y su rama _then_
 -- Construye sugerencias de la forma (LintRedIf e r)
 lintRedIfAnd :: Linting Expr
-lintRedIfAnd = undefined
+lintRedIfAnd = Linting $ \expr -> case expr of
+  If cond thenBranch elseBranch ->
+    -- Si la rama 'then' es una expresión que tiene valor booleana
+    -- construimos una nueva expresión de la forma (cond && thenBranch)
+    Right (Infix And cond thenBranch)
+  _ -> Right expr  -- Si no es un if, devolvemos la expresión original
 
 --------------------------------------------------------------------------------
 -- Sustitución de if por disyunción entre la condición y su rama _else_
