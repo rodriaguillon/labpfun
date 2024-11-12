@@ -1,0 +1,43 @@
+-- if_examples.mhs
+
+-- 1. If con condición True
+f1 = if True then 1 else 0  -- Esperado: 1
+-- Sugerencia: "Reemplazar if True then 1 else 0 por: 1"
+
+-- 2. If con condición False
+f2 = if False then 1 else 0  -- Esperado: 0
+-- Sugerencia: "Reemplazar if False then 1 else 0 por: 0"
+
+-- 3. If con condición y retorno True
+f3 = if (x == True) then True else False  -- Esperado: x
+-- Sugerencia: "Reemplazar if (x == True) then True else False por: x"
+
+-- 4. If con condición y retorno False
+f4 = if (x == False) then False else True  -- Esperado: not x
+-- Sugerencia: "Reemplazar if (x == False) then False else True por: not x"
+
+-- 5. If con condicional redundante
+f5 = if (y == True) then (z == True) else False  -- Esperado: y && z
+-- Sugerencia: "Reemplazar if (y == True) then (z == True) else False por: y && z"
+
+-- 6. If con condición que evalúa a True en subexpresión
+f6 = if (z == True) then (if True then 1 else 0) else 2  -- Esperado: if z then 1 else 2
+-- Sugerencia: "Reemplazar if True then 1 else 0 por: 1"
+
+-- 7. If con condición que evalúa a False en subexpresión
+f7 = if (x == False) then (if False then 1 else 2) else 3  -- Esperado: if not x then 2 else 3
+-- Sugerencia: "Reemplazar if False then 1 else 2 por: 2"
+
+-- 8. If con condición anidada
+f8 = if True then (x + (if False then 1 else 2)) else 3  -- Esperado: x + 2
+-- Sugerencias en orden:
+--   Reemplazar if False then 1 else 2 por: 2
+--   Reemplazar if True then x + 2 else 3 por: x + 2
+
+-- 9. If que se simplifica a una disyunción
+f9 = if (x == True) then True else y  -- Esperado: x || y
+-- Sugerencia: "Reemplazar if x then True else y por: x || y"
+
+-- 10. If que se simplifica a una conjunción
+f10 = if (x == True) then y else False  -- Esperado: x && y
+-- Sugerencia: "Reemplazar if x then y else False por: x && y"

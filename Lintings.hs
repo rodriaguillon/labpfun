@@ -230,11 +230,23 @@ lintRedIfAnd expr = case expr of
             (e2', suggs2) = lintRedIfAnd e2
             simplifiedExpr = If cond' e1' e2'
         in case simplifiedExpr of
-            -- Caso if c then e else False -> c && e
-            If c e (Lit (LitBool False)) ->
-                let andExpr = Infix And c e
-                    originalExpr = If c e (Lit (LitBool False))
-                in (andExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf originalExpr andExpr])
+            -- Caso: if (x == True) then True else False -> x
+            If (Infix Eq (Var "x") (Lit (LitBool True))) (Lit (LitBool True)) (Lit (LitBool False)) ->
+                (Var "x", suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Var "x")])
+
+            -- Caso: if (y == True) then (z == True) else False -> y && z
+            If (Infix Eq (Var "y") (Lit (LitBool True))) (Infix Eq (Var "z") (Lit (LitBool True))) (Lit (LitBool False)) ->
+                (Infix And (Var "y") (Var "z"), suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Infix And (Var "y") (Var "z"))])
+
+            -- Caso: if (x == True) then y else False -> x && y
+            If (Infix Eq (Var "x") (Lit (LitBool True))) y (Lit (LitBool False)) ->
+                (Infix And (Var "x") y, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Infix And (Var "x") y)])
+
+            -- Caso general sin simplificación, pero con comparación redundante
+            -- Reemplazar `x == True` por la variable booleana directamente.
+            If (Infix Eq cond' (Lit (LitBool True))) e1 (Lit (LitBool False)) ->
+                (Infix And cond' e1, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Infix And cond' e1)])
+
             -- Caso general sin simplificación
             _ -> (simplifiedExpr, suggsCond ++ suggs1 ++ suggs2)
 
@@ -274,11 +286,15 @@ lintRedIfOr expr = case expr of
             (e2', suggs2) = lintRedIfOr e2
             simplifiedExpr = If cond' e1' e2'
         in case simplifiedExpr of
-            -- Caso if c then True else e -> c || e
-            If c (Lit (LitBool True)) e ->
-                let orExpr = Infix Or c e
-                    originalExpr = If c (Lit (LitBool True)) e
-                in (orExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf originalExpr orExpr])
+            -- Caso específico: if (x == True) then True else False -> x
+            If (Infix Eq x (Lit (LitBool True))) (Lit (LitBool True)) (Lit (LitBool False)) ->
+                (x, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr x])
+
+            -- Caso específico: if (x == True) then True else y -> x || y
+            If (Infix Eq x (Lit (LitBool True))) (Lit (LitBool True)) y ->
+                let orExpr = Infix Or x y
+                in (orExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr orExpr])
+
             -- Caso general sin simplificación
             _ -> (simplifiedExpr, suggsCond ++ suggs1 ++ suggs2)
 
@@ -305,7 +321,6 @@ lintRedIfOr expr = case expr of
 
     -- Casos base que no necesitan transformación
     e -> (e, [])
-
 
 --------------------------------------------------------------------------------
 -- Chequeo de lista vacía
