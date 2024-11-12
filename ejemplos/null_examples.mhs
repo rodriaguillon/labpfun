@@ -1,0 +1,73 @@
+-- 1. Caso básico de comparación con lista vacía
+f1 = \x -> (xs == [])
+-- Esperado:
+-- Transformar `xs == []` en `null xs`
+-- Sugerencia: "Reemplazar xs == [] por: null xs"
+
+-- 2. Caso de comparación inversa con lista vacía
+f2 = \x -> ([] == ys)
+-- Esperado:
+-- Transformar `[] == ys` en `null ys`
+-- Sugerencia: "Reemplazar [] == ys por: null ys"
+
+-- 3. Caso de length igual a cero
+f3 = \x -> (length zs == 0)
+-- Esperado:
+-- Transformar `length zs == 0` en `null zs`
+-- Sugerencia: "Reemplazar length zs == 0 por: null zs"
+
+-- 4. Caso de cero igual a length
+f4 = \x -> (0 == length ws)
+-- Esperado:
+-- Transformar `0 == length ws` en `null ws`
+-- Sugerencia: "Reemplazar 0 == length ws por: null ws"
+
+-- 5. Caso con expresión if
+f5 = \x -> if (xs == []) then True else False
+-- Esperado:
+-- Transformar `xs == []` en `null xs`
+-- Sugerencia: "Reemplazar xs == [] por: null xs"
+
+-- 6. Caso anidado
+f6 = \x -> if (length xs == 0) then (ys == []) else False
+-- Esperado:
+-- Transformar `length xs == 0` en `null xs`
+-- Transformar `ys == []` en `null ys`
+-- Sugerencias:
+-- "Reemplazar length xs == 0 por: null xs"
+-- "Reemplazar ys == [] por: null ys"
+
+-- 7. Caso con length anidado
+f7 = \x -> (length (if xs == [] then ys else zs) == 0)
+-- Esperado:
+-- Transformar `xs == []` en `null xs`
+-- Transformar `length (...) == 0` en `null (...)`
+-- Sugerencias:
+-- "Reemplazar xs == [] por: null xs"
+-- "Reemplazar length (...) == 0 por: null (...)"
+
+-- 8. Caso con múltiples comprobaciones
+f8 = \x -> if (xs == []) then (length ys == 0) else ([] == zs)
+-- Esperado:
+-- Transformar todas las comprobaciones de lista vacía
+-- Sugerencias:
+-- "Reemplazar xs == [] por: null xs"
+-- "Reemplazar length ys == 0 por: null ys"
+-- "Reemplazar [] == zs por: null zs"
+
+-- 9. Caso con lambda anidada
+f9 = \x -> (\y -> length y == 0) xs
+-- Esperado:
+-- Transformar `length y == 0` en `null y`
+-- Sugerencia: "Reemplazar length y == 0 por: null y"
+
+-- 10. Caso con Case
+--f10 = \x -> case (xs == []) of
+ --            True -> length ys == 0
+   --          False -> [] == zs
+-- Esperado:
+-- Transformar todas las comprobaciones
+-- Sugerencias:
+-- "Reemplazar xs == [] por: null xs"
+-- "Reemplazar length ys == 0 por: null ys"
+-- "Reemplazar [] == zs por: null zs"

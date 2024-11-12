@@ -184,11 +184,15 @@ lintRedIfCond expr = case expr of
             simplifiedExpr = If cond' e1' e2'
         in case simplifiedExpr of
             -- Caso if True -> solo queda e1
-            If (Lit (LitBool True)) _ eElse ->
-                (e1', suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr e1'])
+            If (Lit (LitBool True)) eThen _ ->
+                (eThen, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr eThen])
             -- Caso if False -> solo queda e2
-            If (Lit (LitBool False)) eThen _ ->
-                (e2', suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr e2'])
+            If (Lit (LitBool False)) _ eElse ->
+                (eElse, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr eElse])
+            -- Caso if (x == False) then False else True -> not x
+            If (Infix Eq x (Lit (LitBool False))) (Lit (LitBool False)) (Lit (LitBool True)) ->
+                let notExpr = App (Var "not") x
+                in (notExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr notExpr])
             -- Caso general si no hay simplificación
             _ -> (simplifiedExpr, suggsCond ++ suggs1 ++ suggs2)
 
@@ -215,6 +219,7 @@ lintRedIfCond expr = case expr of
 
     -- Casos base que no necesitan transformación
     e -> (e, [])
+
 
 
 
@@ -328,8 +333,63 @@ lintRedIfOr expr = case expr of
 -- Sugiere el uso de null para verificar si una lista es vacía
 -- Construye sugerencias de la forma (LintNull e r)
 
+-- Sugiere el uso de `null` para verificar si una lista está vacía
+-- Reemplaza `e == []` o `length e == 0` con `null e`
 lintNull :: Linting Expr
-lintNull = undefined
+lintNull expr = case expr of
+    -- Caso `e == []` o `[] == e`, reemplazable por `null e`
+    Infix Eq e (Lit LitNil) ->
+        let (e', suggs) = lintNull e
+            nullExpr = App (Var "null") e'
+        in (nullExpr, suggs ++ [LintNull expr nullExpr])
+
+    Infix Eq (Lit LitNil) e ->
+        let (e', suggs) = lintNull e
+            nullExpr = App (Var "null") e'
+        in (nullExpr, suggs ++ [LintNull expr nullExpr])
+
+    -- Caso `length e == 0` o `0 == length e`, reemplazable por `null e`
+    Infix Eq (App (Var "length") e) (Lit (LitInt 0)) ->
+        let (e', suggs) = lintNull e
+            nullExpr = App (Var "null") e'
+        in (nullExpr, suggs ++ [LintNull expr nullExpr])
+
+    Infix Eq (Lit (LitInt 0)) (App (Var "length") e) ->
+        let (e', suggs) = lintNull e
+            nullExpr = App (Var "null") e'
+        in (nullExpr, suggs ++ [LintNull expr nullExpr])
+
+    -- Recursión en subexpresiones
+    If cond e1 e2 ->
+        let (cond', suggsCond) = lintNull cond
+            (e1', suggs1) = lintNull e1
+            (e2', suggs2) = lintNull e2
+        in (If cond' e1' e2', suggsCond ++ suggs1 ++ suggs2)
+
+    Infix op e1 e2 ->
+        let (e1', suggs1) = lintNull e1
+            (e2', suggs2) = lintNull e2
+        in (Infix op e1' e2', suggs1 ++ suggs2)
+
+    App e1 e2 ->
+        let (e1', suggs1) = lintNull e1
+            (e2', suggs2) = lintNull e2
+        in (App e1' e2', suggs1 ++ suggs2)
+
+    Lam n e ->
+        let (e', suggs) = lintNull e
+        in (Lam n e', suggs)
+
+    Case e1 e2 (n1, n2, e3) ->
+        let (e1', suggs1) = lintNull e1
+            (e2', suggs2) = lintNull e2
+            (e3', suggs3) = lintNull e3
+        in (Case e1' e2' (n1, n2, e3'), suggs1 ++ suggs2 ++ suggs3)
+
+    -- Casos base que no necesitan transformación
+    e -> (e, [])
+
+
 
 --------------------------------------------------------------------------------
 -- Eliminación de la concatenación

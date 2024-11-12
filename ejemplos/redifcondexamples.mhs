@@ -1,0 +1,109 @@
+-- Casos de prueba para eliminación de if redundantes
+
+-- 1. Caso básico con if True
+f1 = \x -> if True then 1 else 2
+-- Esperado:
+-- Transformar if True then 1 else 2 en 1
+-- Sugerencia: "Reemplazar if True then 1 else 2 por: 1"
+
+-- 2. Caso básico con if False
+f2 = \x -> if False then 1 else 2
+-- Esperado:
+-- Transformar if False then 1 else 2 en 2
+-- Sugerencia: "Reemplazar if False then 1 else 2 por: 2"
+
+-- 3. Caso de if con True en rama then
+f3 = \x -> if x then True else y
+-- Esperado:
+-- Transformar if x then True else y en (x || y)
+-- Sugerencia: "Reemplazar if x then True else y por: x || y"
+
+-- 4. Caso de if con False en rama else y condición booleana
+f4 = \x -> if (x && y) then z else False
+-- Esperado:
+-- Transformar if (x && y) then z else False en ((x && y) && z)
+-- Sugerencia: "Reemplazar if (x && y) then z else False por: (x && y) && z"
+
+-- 5. Caso de if anidados con literal en condición
+f5 = \x -> if True then (if False then 1 else 2) else 3
+-- Esperado:
+-- Transformar if False then 1 else 2 en 2
+-- Transformar if True then 2 else 3 en 2
+-- Sugerencias:
+-- "Reemplazar if False then 1 else 2 por: 2"
+-- "Reemplazar if True then 2 else 3 por: 2"
+
+-- 6. Caso de if anidado en rama else
+f6 = \x -> if x then 1 else (if True then 2 else 3)
+-- Esperado:
+-- Transformar if True then 2 else 3 en 2
+-- Sugerencia: "Reemplazar if True then 2 else 3 por: 2"
+
+-- 7. Caso de if con expresiones booleanas complejas
+f7 = \x -> if (True && False) then x else y
+-- Esperado:
+-- Transformar True && False en False
+-- Transformar if False then x else y en y
+-- Sugerencias:
+-- "Reemplazar True && False por: False"
+-- "Reemplazar if False then x else y por: y"
+
+-- 8. Caso de if con múltiples condiciones anidadas
+f8 = \x -> if True then (if True then (if False then 1 else 2) else 3) else 4
+-- Esperado:
+-- Transformar if False then 1 else 2 en 2
+-- Transformar if True then 2 else 3 en 2
+-- Transformar if True then 2 else 4 en 2
+-- Sugerencias:
+-- "Reemplazar if False then 1 else 2 por: 2"
+-- "Reemplazar if True then 2 else 3 por: 2"
+-- "Reemplazar if True then 2 else 4 por: 2"
+
+-- 9. Caso de if con operaciones aritméticas
+f9 = \x -> if True then (1 + 2) else (3 + 4)
+-- Esperado:
+-- Transformar 1 + 2 en 3
+-- Transformar if True then 3 else (3 + 4) en 3
+-- Sugerencias:
+-- "Reemplazar 1 + 2 por: 3"
+-- "Reemplazar if True then 3 else (3 + 4) por: 3"
+
+-- 10. Caso de if con variables en condición
+f10 = \x -> if x then True else False
+-- Esperado:
+-- Transformar if x then True else False en x
+-- Sugerencia: "Reemplazar if x then True else False por: x"
+
+-- 11. Caso de if con expresiones booleanas en ramas
+f11 = \x -> if True then (x && y) else (y || z)
+-- Esperado:
+-- Transformar if True then (x && y) else (y || z) en (x && y)
+-- Sugerencia: "Reemplazar if True then (x && y) else (y || z) por: x && y"
+
+-- 12. Caso complejo con múltiples transformaciones
+f12 = \x -> if (True && False) then (if True then 1 else 2) else (if False then 3 else 4)
+-- Esperado:
+-- Transformar True && False en False
+-- Transformar if True then 1 else 2 en 1
+-- Transformar if False then 3 else 4 en 4
+-- Transformar if False then 1 else 4 en 4
+-- Sugerencias:
+-- "Reemplazar True && False por: False"
+-- "Reemplazar if True then 1 else 2 por: 1"
+-- "Reemplazar if False then 3 else 4 por: 4"
+-- "Reemplazar if False then 1 else 4 por: 4"
+
+-- 13. Caso con múltiples evaluaciones booleanas
+f13 = \x -> if (True && True || False) then (x && True) else (y || False)
+-- Esperado:
+-- Transformar True && True en True
+-- Transformar True || False en True
+-- Transformar x && True en x
+-- Transformar y || False en y
+-- Transformar if True then x else y en x
+-- Sugerencias:
+-- "Reemplazar True && True por: True"
+-- "Reemplazar True || False por: True"
+-- "Reemplazar x && True por: x"
+-- "Reemplazar y || False por: y"
+-- "Reemplazar if True then x else y por: x"
