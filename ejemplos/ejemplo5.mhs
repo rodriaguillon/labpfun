@@ -1,3 +1,0 @@
--- Caso de if True then x + 2 else 3
-foo :: Int -> Int
-foo x = if True then x + 2 else 3

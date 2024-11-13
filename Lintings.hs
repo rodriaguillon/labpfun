@@ -8,6 +8,14 @@ import LintTypes
 -- AUXILIARES
 --------------------------------------------------------------------------------
 
+linteadoAux :: Expr -> (Expr, [LintSugg])
+linteadoAux newExpr = case newExpr of
+    Infix Add (Lit (LitInt _)) (Lit (LitInt _)) -> lintComputeConstant newExpr
+    Infix Sub (Lit (LitInt _)) (Lit (LitInt _)) -> lintComputeConstant newExpr
+    Infix Mult (Lit (LitInt _)) (Lit (LitInt _)) -> lintComputeConstant newExpr
+    Infix Div (Lit (LitInt _)) (Lit (LitInt _)) -> lintComputeConstant newExpr
+    _ -> (newExpr, [])
+
 -- Computa la lista de variables libres de una expresión
 freeVariables :: Expr -> [Name]
 freeVariables = undefined
@@ -67,13 +75,13 @@ lintComputeConstant expr = case expr of
     Infix Or (Lit (LitBool x)) (Lit (LitBool y)) ->
         let result = x || y
         in (Lit (LitBool result), [LintCompCst expr (Lit (LitBool result))])
-
         
     -- Casos recursivos para otras expresiones
     Infix op e1 e2 ->
         let (e1', suggs1) = lintComputeConstant e1
             (e2', suggs2) = lintComputeConstant e2
-        in (Infix op e1' e2', suggs1 ++ suggs2)
+            (simplifiedExpr, suggsAux) = linteadoAux (Infix op e1' e2')
+        in (simplifiedExpr,  suggs1 ++ suggs2 ++ suggsAux )
         
     App e1 e2 ->
         let (e1', suggs1) = lintComputeConstant e1
@@ -98,7 +106,6 @@ lintComputeConstant expr = case expr of
         
     -- Casos base que no necesitan transformación
     e -> (e, [])
-
 
 --------------------------------------------------------------------------------
 -- Eliminación de chequeos redundantes de booleanos
@@ -397,8 +404,63 @@ lintNull expr = case expr of
 -- se aplica en casos de la forma (e:[] ++ es), reemplazando por (e:es)
 -- Construye sugerencias de la forma (LintAppend e r)
 
+-- Función principal lintAppend
 lintAppend :: Linting Expr
-lintAppend = undefined
+lintAppend expr = case expr of
+    -- Caso (e:[] ++ es) -> (e:es)
+    Infix Append (Infix Cons e (Lit LitNil)) es ->
+        let (es', suggs) = lintAppend es
+            consExpr = Infix Cons e es'
+        in (consExpr, suggs ++ [LintAppend expr consExpr])
+
+    -- Caso recursivo para eliminar concatenación dentro de Infix Append (e:[] ++ (e':[] ++ es)) -> (e:(e':es))
+    Infix Append (Infix Cons e (Lit LitNil)) (Infix Append es1 es2) ->
+        let (es1', suggs1) = lintAppend es1
+            (es2', suggs2) = lintAppend es2
+            consExpr = Infix Cons e (Infix Append es1' es2')
+        in (consExpr, suggs1 ++ suggs2 ++ [LintAppend expr consExpr])
+
+    -- Caso recursivo para otras expresiones Infix Append
+    Infix Append e1 e2 ->
+        let (e1', suggs1) = lintAppend e1
+            (e2', suggs2) = lintAppend e2
+        in (Infix Append e1' e2', suggs1 ++ suggs2)
+
+    -- Caso App
+    App e1 e2 ->
+        let (e1', suggs1) = lintAppend e1
+            (e2', suggs2) = lintAppend e2
+        in (App e1' e2', suggs1 ++ suggs2)
+
+    -- Caso Lam
+    Lam n e ->
+        let (e', suggs) = lintAppend e
+        in (Lam n e', suggs)
+
+    -- Caso Case
+    Case e1 e2 (n1, n2, e3) ->
+        let (e1', suggs1) = lintAppend e1
+            (e2', suggs2) = lintAppend e2
+            (e3', suggs3) = lintAppend e3
+        in (Case e1' e2' (n1, n2, e3'), suggs1 ++ suggs2 ++ suggs3)
+
+    -- Caso If
+    If e1 e2 e3 ->
+        let (e1', suggs1) = lintAppend e1
+            (e2', suggs2) = lintAppend e2
+            (e3', suggs3) = lintAppend e3
+        in (If e1' e2' e3', suggs1 ++ suggs2 ++ suggs3)
+
+    -- Casos base que no necesitan transformación
+    e -> (e, [])
+
+
+
+
+
+
+
+
 
 --------------------------------------------------------------------------------
 -- Composición

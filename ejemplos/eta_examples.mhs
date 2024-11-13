@@ -1,0 +1,58 @@
+-- Casos de prueba para eta-reducción
+
+-- 1. Caso básico de eta-reducción
+f1 = \x -> f x
+-- Esperado:
+-- Transformar \x -> f x en f
+-- Sugerencia: "Reemplazar \x -> f x por: f"
+
+-- 2. Caso donde no se debe aplicar eta-reducción (x libre en e)
+f2 = \x -> g x x
+-- Esperado:
+-- No hay transformación
+-- Sin sugerencias
+
+-- 3. Caso de eta-reducción anidada
+f3 = \x -> (\y -> f y) x
+-- Esperado:
+-- Transformar \y -> f y en f
+-- Transformar \x -> f x en f
+-- Sugerencias:
+-- "Reemplazar \y -> f y por: f"
+-- "Reemplazar \x -> f x por: f"
+
+-- 4. Caso con expresión más compleja
+f4 = \x -> (g . h) x
+-- Esperado:
+-- Transformar \x -> (g . h) x en (g . h)
+-- Sugerencia: "Reemplazar \x -> (g . h) x por: g . h"
+
+-- 5. Caso con múltiples lambdas
+f5 = \x -> \y -> f x y
+-- Esperado:
+-- No hay transformación (y está libre en f x)
+-- Sin sugerencias
+
+-- 6. Caso con operadores
+f6 = \x -> 1 x
+-- Esperado:
+-- Transformar \x -> (+) 1 x en (+) 1
+-- Sugerencia: "Reemplazar \x -> (+) 1 x por: (+) 1"
+
+-- 7. Caso con aplicación parcial
+f7 = \x -> map f x
+-- Esperado:
+-- Transformar \x -> map f x en map f
+-- Sugerencia: "Reemplazar \x -> map f x por: map f"
+
+-- 9. Caso con expresión condicional
+f9 = \x -> if p then f x else g x
+-- Esperado:
+-- No hay transformación (x aparece en ambas ramas)
+-- Sin sugerencias
+
+-- 10. Caso con composición de funciones
+f10 = \x -> (f . g . h) x
+-- Esperado:
+-- Transformar \x -> (f . g . h) x en (f . g . h)
+-- Sugerencia: "Reemplazar \x -> (f . g . h) x por: f . g . h"

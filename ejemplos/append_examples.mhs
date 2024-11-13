@@ -1,0 +1,51 @@
+-- Funciones auxiliares para hacer los tests más legibles
+-- 1. Caso básico
+f1 = \x -> (x:[] ++ ys)
+-- Esperado:
+-- Transformar `x:[] ++ ys` en `x:ys`
+-- Sugerencia: "Reemplazar x:[] ++ ys por: x:ys"
+
+-- 2. Caso anidado simple
+f2 = \x -> (x:[] ++ (y:[] ++ ys))
+-- Esperado:
+-- Primero: Transformar `y:[] ++ ys` en `y:ys`
+-- Luego: Transformar `x:[] ++ (y:ys)` en `x:(y:ys)`
+-- Sugerencias:
+-- "Reemplazar y:[] ++ ys por: y:ys"
+-- "Reemplazar x:[] ++ (y:ys) por: x:(y:ys)"
+
+-- 3. Caso con múltiples concatenaciones
+f3 = \x -> (x:[] ++ y:[] ++ z:[] ++ ws)
+-- Esperado:
+-- Transformaciones sucesivas de dentro hacia fuera
+-- Sugerencias en orden:
+-- "Reemplazar z:[] ++ ws por: z:ws"
+-- "Reemplazar y:[] ++ (z:ws) por: y:(z:ws)"
+-- "Reemplazar x:[] ++ (y:(z:ws)) por: x:(y:(z:ws))"
+
+-- 4. Caso con if
+f4 = \x -> if b then (x:[] ++ ys) else (y:[] ++ zs)
+-- Esperado:
+-- Transformar ambas ramas del if
+-- Sugerencias:
+-- "Reemplazar x:[] ++ ys por: x:ys"
+-- "Reemplazar y:[] ++ zs por: y:zs"
+
+-- 5. Caso con lambda anidada
+f5 = \x -> (\y -> y:[] ++ x:[] ++ ys)
+-- Esperado:
+-- Transformaciones de dentro hacia fuera
+-- Sugerencias:
+-- "Reemplazar x:[] ++ ys por: x:ys"
+-- "Reemplazar y:[] ++ (x:ys) por: y:(x:ys)"
+
+
+-- 6. Caso complejo
+f6 = \x -> (a:[] ++ (b:[] ++ (if p then c:[] ++ xs else d:[] ++ ys)))
+-- Esperado:
+-- Transformaciones de dentro hacia fuera
+-- Sugerencias en orden:
+-- "Reemplazar c:[] ++ xs por: c:xs"
+-- "Reemplazar d:[] ++ ys por: d:ys"
+-- "Reemplazar b:[] ++ (if p then c:xs else d:ys) por: b:(if p then c:xs else d:ys)"
+-- "Reemplazar a:[] ++ (b:(if p then c:xs else d:ys)) por: a:(b:(if p then c:xs else d:ys))"
