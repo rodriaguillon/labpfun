@@ -408,24 +408,20 @@ lintNull expr = case expr of
 lintAppend :: Linting Expr
 lintAppend expr = case expr of
     -- Caso (e:[] ++ es) -> (e:es)
-    Infix Append (Infix Cons e (Lit LitNil)) es ->
-        let (es', suggs) = lintAppend es
-            consExpr = Infix Cons e es'
-        in (consExpr, suggs ++ [LintAppend expr consExpr])
-
-    -- Caso recursivo para eliminar concatenación dentro de Infix Append (e:[] ++ (e':[] ++ es)) -> (e:(e':es))
-    Infix Append (Infix Cons e (Lit LitNil)) (Infix Append es1 es2) ->
-        let (es1', suggs1) = lintAppend es1
-            (es2', suggs2) = lintAppend es2
-            consExpr = Infix Cons e (Infix Append es1' es2')
-        in (consExpr, suggs1 ++ suggs2 ++ [LintAppend expr consExpr])
-
+    
     -- Caso recursivo para otras expresiones Infix Append
     Infix Append e1 e2 ->
         let (e1', suggs1) = lintAppend e1
             (e2', suggs2) = lintAppend e2
-        in (Infix Append e1' e2', suggs1 ++ suggs2)
+        in case e1' of 
+            Infix Cons e (Lit LitNil) -> (Infix Cons e e2', suggs1 ++ suggs2 ++ [LintAppend(Infix Append e1' e2') (Infix Cons e e2')])
+            _ -> (Infix Append e1' e2', suggs1 ++ suggs2)
 
+    Infix op e1 e2 ->
+        let (e1', suggs1) = lintAppend e1
+            (e2', suggs2) = lintAppend e2
+        in (Infix op e1' e2', suggs1 ++ suggs2)
+    
     -- Caso App
     App e1 e2 ->
         let (e1', suggs1) = lintAppend e1
@@ -455,13 +451,6 @@ lintAppend expr = case expr of
     e -> (e, [])
 
 
-
-
-
-
-
-
-
 --------------------------------------------------------------------------------
 -- Composición
 --------------------------------------------------------------------------------
@@ -469,7 +458,45 @@ lintAppend expr = case expr of
 -- Construye sugerencias de la forma (LintComp e r)
 
 lintComp :: Linting Expr
-lintComp = undefined
+lintComp expr = case expr of
+
+    -- Caso de composición con dos funciones anidadas: f (g x)
+    App e1 e2 ->
+        let (e1', suggs1) = lintComp e1
+            (e2', suggs2) = lintComp e2
+        in case e2' of
+            App e3 e4 -> (App (Infix Comp e1' e3) e4, suggs1 ++ suggs2 ++ [LintComp (App e1' e2') (App (Infix Comp e1' e3) e4)])
+            _ -> (App e1' e2', suggs1 ++ suggs2)
+
+    Infix op e1 e2 ->
+        let (e1', suggs1) = lintComp e1
+            (e2', suggs2) = lintComp e2
+        in (Infix op e1' e2', suggs1 ++ suggs2)
+
+
+    -- Caso de If con transformaciones en ambas ramas
+    If cond thenExpr elseExpr ->
+        let (transformedThen, suggsThen) = lintComp thenExpr
+            (transformedElse, suggsElse) = lintComp elseExpr
+            transformedIf = If cond transformedThen transformedElse
+        in (transformedIf, suggsThen ++ suggsElse)
+
+    -- Caso de Case con transformaciones
+    Case expr caseNil (name1, name2, caseCons) ->
+        let (transformedExpr, suggsExpr) = lintComp expr
+            (transformedCaseNil, suggsNil) = lintComp caseNil
+            (transformedCaseCons, suggsCons) = lintComp caseCons
+        in (Case transformedExpr transformedCaseNil (name1, name2, transformedCaseCons),
+            suggsExpr ++ suggsNil ++ suggsCons)
+
+    -- Caso de Lambda con transformaciones en el cuerpo
+    Lam name body ->
+        let (transformedBody, suggestions) = lintComp body
+        in (Lam name transformedBody, suggestions)
+
+    -- Otros casos: no transformar
+    e -> (e, [])
+
 
 
 --------------------------------------------------------------------------------

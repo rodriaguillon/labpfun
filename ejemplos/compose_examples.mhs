@@ -1,70 +1,59 @@
--- 1. Caso básico: f (g x) -> (f . g) x
-test1 :: Expr
-test1 = app (var "f") (app (var "g") (var "x"))
--- Esperado: (f . g) x
--- Sugerencia: "Sugerencia para: f (g x). Usar composición. Reemplazar por: (f . g) x"
+-- Casos de prueba para composición
 
--- 2. Caso anidado simple: f (g (h x)) -> (f . (g . h)) x
-test2 :: Expr
-test2 = app (var "f") (app (var "g") (app (var "h") (var "x")))
+-- 1. Caso básico de composición: f (g x) -> (f . g) x
+f1 = f (g x)
 -- Esperado:
--- Primero: h x -> (g . h) x
--- Luego: f ((g . h) x) -> (f . (g . h)) x
+-- Transformar f (g x) en (f . g) x
+-- Sugerencia: "Reemplazar f (g x) por: (f . g) x"
+
+-- 2. Caso simple anidado: f (g (h x)) -> (f . (g . h)) x
+f2 = f (g (h x))
+-- Esperado:
+-- Transformación de g (h x) en (g . h) x
+-- Luego, f ((g . h) x) en (f . (g . h)) x
 -- Sugerencias:
--- "Sugerencia para: g (h x). Usar composición. Reemplazar por: (g . h) x"
--- "Sugerencia para: f ((g . h) x). Usar composición. Reemplazar por: (f . (g . h)) x"
+-- "Reemplazar g (h x) por: (g . h) x"
+-- "Reemplazar f ((g . h) x) por: (f . (g . h)) x"
 
 -- 3. Caso con múltiples aplicaciones anidadas: f (g (h (i x))) -> (f . (g . (h . i))) x
-test3 :: Expr
-test3 = app (var "f") (app (var "g") (app (var "h") (app (var "i") (var "x"))))
+f3 = f (g (h (i x)))
 -- Esperado:
--- Transformaciones sucesivas de dentro hacia fuera
+-- Transformación sucesiva desde el interior hacia el exterior
 -- Sugerencias:
--- "Sugerencia para: h (i x). Usar composición. Reemplazar por: (h . i) x"
--- "Sugerencia para: g ((h . i) x). Usar composición. Reemplazar por: (g . (h . i)) x"
--- "Sugerencia para: f ((g . (h . i)) x). Usar composición. Reemplazar por: (f . (g . (h . i))) x"
+-- "Reemplazar h (i x) por: (h . i) x"
+-- "Reemplazar g ((h . i) x) por: (g . (h . i)) x"
+-- "Reemplazar f ((g . (h . i)) x) por: (f . (g . (h . i))) x"
 
 -- 4. Caso con if: if b then f (g x) else h (i x)
-test4 :: Expr
-test4 = ifExpr (var "b")
-               (app (var "f") (app (var "g") (var "x")))
-               (app (var "h") (app (var "i") (var "x")))
+f4 = if b then f (g x) else h (i x)
 -- Esperado:
 -- Transformar ambas ramas del if
 -- Sugerencias:
--- "Sugerencia para: f (g x). Usar composición. Reemplazar por: (f . g) x"
--- "Sugerencia para: h (i x). Usar composición. Reemplazar por: (h . i) x"
+-- "Reemplazar f (g x) por: (f . g) x"
+-- "Reemplazar h (i x) por: (h . i) x"
 
 -- 5. Caso con lambda anidada: \x -> f (g x)
-test5 :: Expr
-test5 = lambda "x" (app (var "f") (app (var "g") (var "x")))
+f5 = \x -> f (g x)
 -- Esperado:
 -- Transformación dentro del cuerpo de la lambda
 -- Sugerencia:
--- "Sugerencia para: f (g x). Usar composición. Reemplazar por: (f . g) x"
+-- "Reemplazar f (g x) por: (f . g) x"
 
 -- 6. Caso con Case
-test6 :: Expr
-test6 = caseExpr (app (var "f") (app (var "g") (var "x")))
-                 nil
-                 ("h", "t", app (var "h") (app (var "i") (var "t")))
+-- f6 = case f (g x) of
+--         [] -> []
+--      (h:t) -> h (i t)
 -- Esperado:
 -- Transformar todas las aplicaciones compuestas
 -- Sugerencias:
--- "Sugerencia para: f (g x). Usar composición. Reemplazar por: (f . g) x"
--- "Sugerencia para: h (i t). Usar composición. Reemplazar por: (h . i) t"
+-- "Reemplazar f (g x) por: (f . g) x"
+-- "Reemplazar h (i t) por: (h . i) t"
 
--- 7. Caso complejo con múltiples anidaciones y control de flujo
-test7 :: Expr
-test7 = app (var "f")
-            (app (var "g")
-                 (ifExpr (var "p")
-                        (app (var "h") (app (var "i") (var "x")))
-                        (app (var "j") (app (var "k") (var "y")))))
--- Esperado:
--- Transformaciones de dentro hacia fuera en ambas ramas del if
+-- 7. Caso complejo con múltiples aplicaciones anidadas y flujo de control
+f7 = f (g (if p then h (i x) else j (k y)))
+-- Expected:
+-- Transformaciones desde el interior hacia el exterior en ambas ramas del if
 -- Sugerencias en orden:
--- "Sugerencia para: h (i x). Usar composición. Reemplazar por: (h . i) x"
--- "Sugerencia para: j (k y). Usar composición. Reemplazar por: (j . k) y"
--- "Sugerencia para: g (if p then (h . i) x else (j . k) y). Usar composición..."
--- "Sugerencia para: f (...). Usar composición..."
+-- "Reemplazar h (i x) por: (h . i) x"
+-- "Reemplazar j (k y) por: (j . k) y"
+-- "Reemplazar f (...) por: (f . g) x"

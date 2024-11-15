@@ -1,58 +1,60 @@
--- Casos de prueba para eta-reducción
+-- Casos de prueba para composición
 
--- 1. Caso básico de eta-reducción
-f1 = \x -> f x
+-- 1. Caso básico de composición: f (g x) -> (f . g) x
+f1 = f (g x)
 -- Esperado:
--- Transformar \x -> f x en f
--- Sugerencia: "Reemplazar \x -> f x por: f"
+-- Transformar f (g x) en (f . g) x
+-- Sugerencia: "Reemplazar f (g x) por: (f . g) x"
 
--- 2. Caso donde no se debe aplicar eta-reducción (x libre en e)
-f2 = \x -> g x x
+-- 2. Caso simple anidado: f (g (h x)) -> (f . (g . h)) x
+f2 = f (g (h x))
 -- Esperado:
--- No hay transformación
--- Sin sugerencias
-
--- 3. Caso de eta-reducción anidada
-f3 = \x -> (\y -> f y) x
--- Esperado:
--- Transformar \y -> f y en f
--- Transformar \x -> f x en f
+-- Transformación de g (h x) en (g . h) x
+-- Luego, f ((g . h) x) en (f . (g . h)) x
 -- Sugerencias:
--- "Reemplazar \y -> f y por: f"
--- "Reemplazar \x -> f x por: f"
+-- "Reemplazar g (h x) por: (g . h) x"
+-- "Reemplazar f ((g . h) x) por: (f . (g . h)) x"
 
--- 4. Caso con expresión más compleja
-f4 = \x -> (g . h) x
+-- 3. Caso con múltiples aplicaciones anidadas: f (g (h (i x))) -> (f . (g . (h . i))) x
+f3 = f (g (h (i x)))
 -- Esperado:
--- Transformar \x -> (g . h) x en (g . h)
--- Sugerencia: "Reemplazar \x -> (g . h) x por: g . h"
+-- Transformación sucesiva desde el interior hacia el exterior
+-- Sugerencias:
+-- "Reemplazar h (i x) por: (h . i) x"
+-- "Reemplazar g ((h . i) x) por: (g . (h . i)) x"
+-- "Reemplazar f ((g . (h . i)) x) por: (f . (g . (h . i))) x"
 
--- 5. Caso con múltiples lambdas
-f5 = \x -> \y -> f x y
+-- 4. Caso con if: if b then f (g x) else h (i x)
+f4 = if b then f (g x) else h (i x)
 -- Esperado:
--- No hay transformación (y está libre en f x)
--- Sin sugerencias
+-- Transformar ambas ramas del if
+-- Sugerencias:
+-- "Reemplazar f (g x) por: (f . g) x"
+-- "Reemplazar h (i x) por: (h . i) x"
 
--- 6. Caso con operadores
-f6 = \x -> 1 x
+-- 5. Caso con lambda anidada: \x -> f (g x)
+f5 = \x -> f (g x)
 -- Esperado:
--- Transformar \x -> (+) 1 x en (+) 1
--- Sugerencia: "Reemplazar \x -> (+) 1 x por: (+) 1"
+-- Transformación dentro del cuerpo de la lambda
+-- Sugerencia:
+-- "Reemplazar f (g x) por: (f . g) x"
 
--- 7. Caso con aplicación parcial
-f7 = \x -> map f x
+-- 6. Caso con Case
+f6 = case f (g x) of
+        [] -> []
+        (h:t) -> h (i t)
 -- Esperado:
--- Transformar \x -> map f x en map f
--- Sugerencia: "Reemplazar \x -> map f x por: map f"
+-- Transformar todas las aplicaciones compuestas
+-- Sugerencias:
+-- "Reemplazar f (g x) por: (f . g) x"
+-- "Reemplazar h (i t) por: (h . i) t"
 
--- 9. Caso con expresión condicional
-f9 = \x -> if p then f x else g x
--- Esperado:
--- No hay transformación (x aparece en ambas ramas)
--- Sin sugerencias
-
--- 10. Caso con composición de funciones
-f10 = \x -> (f . g . h) x
--- Esperado:
--- Transformar \x -> (f . g . h) x en (f . g . h)
--- Sugerencia: "Reemplazar \x -> (f . g . h) x por: f . g . h"
+-- 7. Caso complejo con múltiples aplicaciones anidadas y flujo de control
+f7 = f (g (if p then h (i x) else j (k y)))
+-- Expected:
+-- Transformaciones desde el interior hacia el exterior en ambas ramas del if
+-- Sugerencias en orden:
+-- "Reemplazar h (i x) por: (h . i) x"
+-- "Reemplazar j (k y) por: (j . k) y"
+-- "Reemplazar g (if p then (h . i) x else (j . k) y) por: (g . (if p then (h . i) x else (j . k) y))"
+-- "Reemplazar f (...) por: (f . g) x"
