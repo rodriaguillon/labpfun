@@ -1,60 +1,10 @@
--- Casos de prueba para composición
+eta1 = \y -> (\x -> f y x) y
 
--- 1. Caso básico de composición: f (g x) -> (f . g) x
-f1 = f (g x)
--- Esperado:
--- Transformar f (g x) en (f . g) x
--- Sugerencia: "Reemplazar f (g x) por: (f . g) x"
+eta2 = (\x -> (\y -> f v x y)) && (\j -> (\y -> f v x j y))
 
--- 2. Caso simple anidado: f (g (h x)) -> (f . (g . h)) x
-f2 = f (g (h x))
--- Esperado:
--- Transformación de g (h x) en (g . h) x
--- Luego, f ((g . h) x) en (f . (g . h)) x
--- Sugerencias:
--- "Reemplazar g (h x) por: (g . h) x"
--- "Reemplazar f ((g . h) x) por: (f . (g . h)) x"
+eta4 = \x -> (\y -> f v x y)
 
--- 3. Caso con múltiples aplicaciones anidadas: f (g (h (i x))) -> (f . (g . (h . i))) x
-f3 = f (g (h (i x)))
--- Esperado:
--- Transformación sucesiva desde el interior hacia el exterior
--- Sugerencias:
--- "Reemplazar h (i x) por: (h . i) x"
--- "Reemplazar g ((h . i) x) por: (g . (h . i)) x"
--- "Reemplazar f ((g . (h . i)) x) por: (f . (g . (h . i))) x"
+eta3 = \a -> (\b -> (f a a) b)
 
--- 4. Caso con if: if b then f (g x) else h (i x)
-f4 = if b then f (g x) else h (i x)
--- Esperado:
--- Transformar ambas ramas del if
--- Sugerencias:
--- "Reemplazar f (g x) por: (f . g) x"
--- "Reemplazar h (i x) por: (h . i) x"
-
--- 5. Caso con lambda anidada: \x -> f (g x)
-f5 = \x -> f (g x)
--- Esperado:
--- Transformación dentro del cuerpo de la lambda
--- Sugerencia:
--- "Reemplazar f (g x) por: (f . g) x"
-
--- 6. Caso con Case
-f6 = case f (g x) of
-        [] -> []
-        (h:t) -> h (i t)
--- Esperado:
--- Transformar todas las aplicaciones compuestas
--- Sugerencias:
--- "Reemplazar f (g x) por: (f . g) x"
--- "Reemplazar h (i t) por: (h . i) t"
-
--- 7. Caso complejo con múltiples aplicaciones anidadas y flujo de control
-f7 = f (g (if p then h (i x) else j (k y)))
--- Expected:
--- Transformaciones desde el interior hacia el exterior en ambas ramas del if
--- Sugerencias en orden:
--- "Reemplazar h (i x) por: (h . i) x"
--- "Reemplazar j (k y) por: (j . k) y"
--- "Reemplazar g (if p then (h . i) x else (j . k) y) por: (g . (if p then (h . i) x else (j . k) y))"
--- "Reemplazar f (...) por: (f . g) x"
+eta = (\x -> f y z)
+etaaa = (\x -> f x x)

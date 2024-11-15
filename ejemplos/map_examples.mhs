@@ -1,73 +1,15 @@
--- ejemplo_map.mhs
+id = \xs -> case xs of
+            [] -> [];
+            (b : bs) -> (if b then True else False) : id bs
 
--- 1. Caso básico de recursión sobre lista
-f1 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (x + 1) : f1 xs
--- Esperado: map (\x -> x + 1)
--- Sugerencia: "Reemplazar recursión por: map (\x -> x + 1)"
+neg = \xs -> case xs of
+            [] -> [];
+            (b : bs) -> (b == False) : neg bs
 
--- 2. Función que duplica elementos
-f2 = \lst -> case lst of
-            [] -> []
-            (x:xs) -> (2 * x) : f2 xs
--- Esperado: map (\x -> 2 * x)
--- Sugerencia: "Reemplazar recursión por: map (\x -> 2 * x)"
+all = \p -> \xs -> case xs of
+                    [] -> True;
+                    (x : xs) -> if p x then all p xs else False 
 
--- 3. Función con expresión más compleja
-f3 = \nums -> case nums of
-            [] -> []
-            (n:ns) -> (if n > 0 then n else 0) : f3 ns
--- Esperado: map (\n -> if n > 0 then n else 0)
--- Sugerencia: "Reemplazar recursión por: map (\n -> if n > 0 then n else 0)"
-
--- 4. Caso que no debe transformarse (usa xs en e)
-f4 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (x + length xs) : f4 xs
--- Esperado: sin cambios
--- Sin sugerencias (xs aparece libre en e)
-
--- 5. Caso que no debe transformarse (usa la función recursivamente en e)
-f5 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (f5 [x]) : f5 xs
--- Esperado: sin cambios
--- Sin sugerencias (f5 aparece libre en e)
-
--- 6. Transformación con nombre de variable diferente
-f6 = \lista -> case lista of
-            [] -> []
-            (elem:resto) -> (elem + 1) : f6 resto
--- Esperado: map (\elem -> elem + 1)
--- Sugerencia: "Reemplazar recursión por: map (\elem -> elem + 1)"
-
--- 7. Con operación binaria
-f7 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (x && True) : f7 xs
--- Esperado: map (\x -> x && True)
--- Sugerencia: "Reemplazar recursión por: map (\x -> x && True)"
-
--- 8. Con aplicación de función
-f8 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (not x) : f8 xs
--- Esperado: map not
--- Sugerencia: "Reemplazar recursión por: map not"
-
--- 9. Con expresión case anidada
-f9 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> (case x of
-                        True -> 1
-                        False -> 0) : f9 xs
--- Esperado: map (\x -> case x of True -> 1; False -> 0)
--- Sugerencia: "Reemplazar recursión por: map (\x -> case x of True -> 1; False -> 0)"
-
--- 10. No debe transformarse (patrón diferente)
-f10 = \xs -> case xs of
-            [] -> []
-            (x:xs) -> x : (x : f10 xs)
--- Esperado: sin cambios
--- Sin sugerencias (no sigue el patrón esperado)
+any = \p -> \xs -> case xs of
+                    [] -> True;
+                    (x : xs) -> if p x then True else any p xs 

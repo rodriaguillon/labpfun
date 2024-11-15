@@ -16,9 +16,16 @@ linteadoAux newExpr = case newExpr of
     Infix Div (Lit (LitInt _)) (Lit (LitInt _)) -> lintComputeConstant newExpr
     _ -> (newExpr, [])
 
--- Computa la lista de variables libres de una expresión
+-- Función que obtiene las variables libres de una expresión
 freeVariables :: Expr -> [Name]
-freeVariables = undefined
+freeVariables (Var x) = [x]  -- Una variable es libre por definición
+freeVariables (Lit _) = []  -- Los literales no tienen variables libres
+freeVariables (Infix _ e1 e2) = freeVariables e1 ++ freeVariables e2  -- Variables libres de ambos operandos
+freeVariables (App e1 e2) = freeVariables e1 ++ freeVariables e2  -- Variables libres de ambos operandos
+freeVariables (Lam x e) = filter (/= x) (freeVariables e)  -- Variables libres de la expresión, excluyendo 'x'
+freeVariables (Case e1 e2 (x, y, e3)) = 
+  freeVariables e1 ++ freeVariables e2 ++ filter (`notElem` [x, y]) (freeVariables e3)  -- Variables libres de las expresiones
+freeVariables (If e1 e2 e3) = freeVariables e1 ++ freeVariables e2 ++ freeVariables e3  -- Variables libres de las tres expresiones
 
 
 --------------------------------------------------------------------------------
@@ -505,9 +512,54 @@ lintComp expr = case expr of
 -- se aplica en casos de la forma \x -> e x, reemplazando por e
 -- Construye sugerencias de la forma (LintEta e r)
 
-lintEta :: Linting Expr
-lintEta = undefined
+-- Eta Reducción
+--------------------------------------------------------------------------------
+-- Se aplica en casos de la forma \x -> e x, reemplazando por e
+-- Construye sugerencias de la forma (LintEta e r)
 
+lintEta :: Linting Expr
+lintEta expr = case expr of
+
+      -- Caso genérico de eta-reducción
+    Lam x e1 -> 
+        let (e1', suggs1) = lintEta e1  -- Aplicamos recursión al cuerpo de la lambda
+        in case e1' of
+            App e2 (Var y) | x == y && notElem x (freeVariables e2) ->
+                -- Si cumple las condiciones de eta-reducción
+                (e2, suggs1 ++ [LintEta (Lam x e1') e2])
+            _ -> (Lam x e1', suggs1)  -- Si no aplica, devolvemos la lambda transformada recursivamente
+    
+    -- Lam name body ->
+    --     let (transformedBody, suggestions) = lintEta body
+    --     in (Lam name transformedBody, suggestions)
+
+    App e1 e2 ->
+        let (e1', suggs1) = lintEta e1
+            (e2', suggs2) = lintEta e2
+        in (App e1' e2', suggs1 ++ suggs2)
+
+    Infix op e1 e2 ->
+        let (e1', suggs1) = lintEta e1
+            (e2', suggs2) = lintEta e2
+        in (Infix op e1' e2', suggs1 ++ suggs2)
+
+    If cond thenExpr elseExpr ->
+        let (transformedThen, suggsThen) = lintEta thenExpr
+            (transformedElse, suggsElse) = lintEta elseExpr
+            transformedIf = If cond transformedThen transformedElse
+        in (transformedIf, suggsThen ++ suggsElse)
+
+    Case expr caseNil (name1, name2, caseCons) ->
+        let (transformedExpr, suggsExpr) = lintEta expr
+            (transformedCaseNil, suggsNil) = lintEta caseNil
+            (transformedCaseCons, suggsCons) = lintEta caseCons
+        in (Case transformedExpr transformedCaseNil (name1, name2, transformedCaseCons),
+            suggsExpr ++ suggsNil ++ suggsCons)
+
+    -- Otros casos: no transformar
+    e -> (e, [])
+
+-- ver como actualizar la sugerencia
 
 --------------------------------------------------------------------------------
 -- Eliminación de recursión con map
