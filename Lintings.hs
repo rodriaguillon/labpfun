@@ -568,7 +568,18 @@ lintEta expr = case expr of
 -- Sustituye recursión sobre listas por `map`
 -- Construye sugerencias de la forma (LintMap f r)
 lintMap :: Linting FunDef
-lintMap = undefined
+lintMap = \fndf ->
+    case fndf of
+        FunDef funcname (Lam paramname (Case (Var paramname') (Lit (LitNil)) (n1, n2, Infix Cons e (App (Var funcname') (Var n2')))))
+            | funcname == funcname' && paramname == paramname' && n2 == n2' ->
+                let freeVars = freeVariables e
+                in if paramname `elem` freeVars || n2 `elem` freeVars
+                    then (fndf, [])
+                    else
+                        let suggestion = FunDef funcname (App (Var "map") (Lam n1 e))
+                        in (suggestion, [LintMap fndf suggestion])
+        _ -> (fndf, [])
+
 
 
 --------------------------------------------------------------------------------
