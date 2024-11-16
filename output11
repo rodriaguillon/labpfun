@@ -1,20 +1,16 @@
 Función: foo
 **Sugerencia para:
-x == True
-Eliminar chequeo reduntante. Reemplazar por:
-x
-**Sugerencia para:
-if c then x else False
+if False then y else x + y
 If redundante. Reemplazar por:
-c && x
+x + y
 --------------------------------------------------------------------------------
 Función: bar
 **Sugerencia para:
-if True then 9 else x
+if True then y else x + y
 If redundante. Reemplazar por:
-9
+y
 **Sugerencia para:
-10 + 9
-Constante. Reemplazar por:
-19
+\x -> (\y -> y) x
+Usar eta-reducción. Reemplazar por:
+\y -> y
 --------------------------------------------------------------------------------

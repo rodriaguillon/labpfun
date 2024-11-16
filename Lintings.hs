@@ -207,6 +207,20 @@ lintRedIfCond expr = case expr of
             If (Infix Eq x (Lit (LitBool False))) (Lit (LitBool False)) (Lit (LitBool True)) ->
                 let notExpr = App (Var "not") x
                 in (notExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr notExpr])
+            -- Caso if (x == True) then True else False -> x
+            If (Infix Eq x (Lit (LitBool True))) (Lit (LitBool True)) (Lit (LitBool False)) ->
+                (x, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr x])
+            -- Caso if (x == True) then y else False -> x && y
+            If (Infix Eq x (Lit (LitBool True))) y (Lit (LitBool False)) ->
+                (Infix And x y, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Infix And x y)])
+            -- Caso if c then x else False -> c && x
+            If cond x (Lit (LitBool False)) ->
+                let andExpr = Infix And cond x
+                in (andExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr andExpr])
+            -- Caso if c then True else x -> c || x
+            If cond (Lit (LitBool True)) x ->
+                let orExpr = Infix Or cond x
+                in (orExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr orExpr])
             -- Caso general si no hay simplificación
             _ -> (simplifiedExpr, suggsCond ++ suggs1 ++ suggs2)
 
