@@ -199,28 +199,28 @@ lintRedIfCond expr = case expr of
         in case simplifiedExpr of
             -- Caso if True -> solo queda e1
             If (Lit (LitBool True)) eThen _ ->
-                (eThen, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr eThen])
+                (eThen, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr eThen])
             -- Caso if False -> solo queda e2
             If (Lit (LitBool False)) _ eElse ->
-                (eElse, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr eElse])
+                (eElse, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr eElse])
             -- Caso if (x == False) then False else True -> not x
             If (Infix Eq x (Lit (LitBool False))) (Lit (LitBool False)) (Lit (LitBool True)) ->
                 let notExpr = App (Var "not") x
-                in (notExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr notExpr])
+                in (notExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr notExpr])
             -- Caso if (x == True) then True else False -> x
             If (Infix Eq x (Lit (LitBool True))) (Lit (LitBool True)) (Lit (LitBool False)) ->
-                (x, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr x])
+                (x, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr x])
             -- Caso if (x == True) then y else False -> x && y
             If (Infix Eq x (Lit (LitBool True))) y (Lit (LitBool False)) ->
-                (Infix And x y, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr (Infix And x y)])
+                (Infix And x y, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr (Infix And x y)])
             -- Caso if c then x else False -> c && x
             If cond x (Lit (LitBool False)) ->
                 let andExpr = Infix And cond x
-                in (andExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr andExpr])
+                in (andExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr andExpr])
             -- Caso if c then True else x -> c || x
             If cond (Lit (LitBool True)) x ->
                 let orExpr = Infix Or cond x
-                in (orExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf expr orExpr])
+                in (orExpr, suggsCond ++ suggs1 ++ suggs2 ++ [LintRedIf simplifiedExpr orExpr])
             -- Caso general si no hay simplificación
             _ -> (simplifiedExpr, suggsCond ++ suggs1 ++ suggs2)
 
