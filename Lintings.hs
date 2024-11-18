@@ -617,10 +617,13 @@ lint1 >==> lint2 = \x ->
 
 -- aplica las transformaciones 'lints' repetidas veces y de forma incremental,
 -- hasta que ya no generen más cambios en 'func'
-lintRec :: Eq a => Linting a -> a -> (a, [LintSugg])
-lintRec lints func =
-    let (func', suggs) = lints func
-    in if func == func'
-        then (func, suggs)
-        else let (func'', suggs') = lintRec lints func'
-                in (func'', suggs ++ suggs')
+lintRec :: Linting a -> Linting a
+lintRec lints func = 
+    let 
+        (res, sugg) = lints func
+    in  
+        if null sugg
+        then (res, sugg)
+        else 
+            let (res2, sugg2) = lintRec lints res
+            in (res2, sugg ++ sugg2)
